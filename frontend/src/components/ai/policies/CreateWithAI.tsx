@@ -238,6 +238,14 @@ export function CreateWithAI({ onPolicyCreate, onCancel }: CreateWithAIProps) {
     setError(null)
 
     try {
+    console.log(
+      '[CREATE WITH AI] Save button clicked',
+      {
+        policyName,
+        input,
+        policyType,
+      }
+    )
       await onPolicyCreate({
         name: policyName.trim(),
         description: description.trim(),

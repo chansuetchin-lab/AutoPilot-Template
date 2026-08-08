@@ -1,171 +1,336 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Icons } from '@/components/ui/icons'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
+import { apiClient } from '@/lib/api-client'
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-}
-
-// Sample workbench tools
-const tools = [
-  {
-    id: 'ai-assistant',
-    title: 'AI Assistant',
-    description: 'Chat with your AI assistant for help with tasks',
-    icon: Icons.sparkles,
-    color: 'bg-gradient-to-br from-brand-navy to-brand-purple',
-    status: 'available',
-  },
-  {
-    id: 'automation',
-    title: 'Automation Builder',
-    description: 'Create and manage automated workflows',
-    icon: Icons.zap,
-    color: 'bg-gradient-to-br from-brand-cornflower to-brand-purple',
-    status: 'available',
-  },
-  {
-    id: 'analytics',
-    title: 'Analytics Dashboard',
-    description: 'View detailed analytics and reports',
-    icon: Icons.activity,
-    color: 'bg-gradient-to-br from-emerald-500 to-emerald-600',
-    status: 'coming-soon',
-  },
-  {
-    id: 'integrations',
-    title: 'Integrations',
-    description: 'Connect with third-party services',
-    icon: Icons.share,
-    color: 'bg-gradient-to-br from-amber-500 to-orange-500',
-    status: 'coming-soon',
-  },
-]
-
-function ToolCard({ tool }: { tool: (typeof tools)[0] }) {
-  const Icon = tool.icon
-  const isComingSoon = tool.status === 'coming-soon'
-
-  return (
-    <motion.div variants={itemVariants}>
-      <Card
-        className={cn(
-          'h-full cursor-pointer transition-all duration-300',
-          isComingSoon && 'opacity-60'
-        )}
-      >
-        <CardHeader>
-          <div className='flex items-start justify-between'>
-            <div
-              className={cn(
-                'flex h-12 w-12 items-center justify-center rounded-xl text-white',
-                tool.color
-              )}
-            >
-              <Icon className='h-6 w-6' strokeWidth={1.5} />
-            </div>
-            {isComingSoon && (
-              <span className='rounded-full bg-muted px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-brand-muted'>
-                Coming Soon
-              </span>
-            )}
-          </div>
-          <CardTitle className='mt-4'>{tool.title}</CardTitle>
-          <CardDescription>{tool.description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            variant={isComingSoon ? 'outline' : 'default'}
-            className='w-full'
-            disabled={isComingSoon}
-          >
-            {isComingSoon ? 'Notify Me' : 'Open Tool'}
-            {!isComingSoon && <Icons.arrowRight className='ml-2 h-4 w-4' />}
-          </Button>
-        </CardContent>
-      </Card>
-    </motion.div>
-  )
+type Exception = {
+  id: number
+  type: string
+  reason: string
+  status: string
+  incident?: {
+    key?: string
+    summary?: string
+    priority?: string
+    status?: string
+    diagnosis?: string
+    diagnosis_confidence?: number | null
+    action?: string
+  }
+  action_result?: {
+    status?: string
+    message?: string
+  }
+  execution?: {
+    status?: string
+    action?: string
+    issue_key?: string
+    timestamp?: string
+  }
+  verification?: {
+    status?: string
+    message?: string
+    reason?: string
+  }
 }
 
 export default function WorkbenchPage() {
-  return (
-    <motion.div
-      className='space-y-8'
-      variants={containerVariants}
-      initial='hidden'
-      animate='visible'
-    >
-      {/* Header */}
-      <motion.div variants={itemVariants}>
-        <h1 className='text-display-3 font-bold tracking-tight text-brand-navy'>
-          Workbench
-        </h1>
-        <p className='mt-2 text-lg text-muted-foreground'>
-          Access your AI tools and automation workflows.
-        </p>
-      </motion.div>
+  const [exceptions, setExceptions] = useState<Exception[]>([])
+  const [loading, setLoading] = useState(true)
 
-      {/* Tools Grid */}
-      <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-4'>
-        {tools.map((tool) => (
-          <ToolCard key={tool.id} tool={tool} />
-        ))}
+  async function loadExceptions() {
+    try {
+      const data = await apiClient.get<Exception[]>(
+        '/api/exceptions'
+      )
+
+      setExceptions(data)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadExceptions()
+  }, [])
+
+  async function approve(id: number) {
+    try {
+      await apiClient.post(
+        `/api/exceptions/${id}/approve`
+      )
+
+      await loadExceptions()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  async function reject(id: number) {
+    try {
+      await apiClient.post(
+        `/api/exceptions/${id}/reject`
+      )
+
+      await loadExceptions()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  async function remediate(id: number) {
+    try {
+      await apiClient.post(
+        `/api/exceptions/${id}/remediate`
+      )
+
+      await loadExceptions()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  async function verify(id: number) {
+    try {
+      await apiClient.post(
+        `/api/exceptions/${id}/verify`
+      )
+
+      await loadExceptions()
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
+  function getStatusClass(status: string) {
+    switch (status) {
+      case 'PENDING':
+        return 'text-yellow-600'
+
+      case 'APPROVED':
+        return 'text-blue-600'
+
+      case 'REMEDIATING':
+        return 'text-orange-600'
+
+      case 'RESOLVED':
+        return 'text-green-600'
+
+      case 'REJECTED':
+        return 'text-red-600'
+
+      default:
+        return 'text-gray-600'
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+
+      <div>
+        <h1 className="text-4xl font-bold">
+          AI Workbench
+        </h1>
+
+        <p className="text-muted-foreground">
+          Review AI-detected exceptions and manage remediation.
+        </p>
       </div>
 
-      {/* Quick Actions */}
-      <motion.div variants={itemVariants}>
-        <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Icons.zap className='h-5 w-5 text-brand-cornflower' />
-              Quick Actions
-            </CardTitle>
-            <CardDescription>
-              Frequently used actions for faster access
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='flex flex-wrap gap-3'>
-              <Button variant='outline' size='sm'>
-                <Icons.plus className='mr-2 h-4 w-4' />
-                New Task
-              </Button>
-              <Button variant='outline' size='sm'>
-                <Icons.fileText className='mr-2 h-4 w-4' />
-                Generate Report
-              </Button>
-              <Button variant='outline' size='sm'>
-                <Icons.mail className='mr-2 h-4 w-4' />
-                Send Notification
-              </Button>
-              <Button variant='outline' size='sm'>
-                <Icons.download className='mr-2 h-4 w-4' />
-                Export Data
-              </Button>
+      <div className="space-y-5">
+
+        {loading && (
+          <p>Loading exceptions...</p>
+        )}
+
+        {!loading && exceptions.length === 0 && (
+          <div className="border rounded-xl p-6">
+            No exceptions found.
+          </div>
+        )}
+
+        {exceptions.map((item) => (
+          <div
+            key={item.id}
+            className="border rounded-xl p-6 space-y-4"
+          >
+
+            <div className="flex items-center justify-between">
+
+              <h2 className="text-xl font-bold">
+                {item.incident?.key || `Exception #${item.id}`}
+              </h2>
+
+              <span
+                className={`font-semibold ${getStatusClass(item.status)}`}
+              >
+                {item.status}
+              </span>
+
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    </motion.div>
+
+            {item.incident?.summary && (
+              <p>
+                <b>Summary:</b> {item.incident.summary}
+              </p>
+            )}
+
+            <p>
+              <b>Type:</b> {item.type}
+            </p>
+
+            <p>
+              <b>Reason:</b> {item.reason}
+            </p>
+
+            {item.incident?.priority && (
+              <p>
+                <b>Priority:</b> {item.incident.priority}
+              </p>
+            )}
+
+            {item.incident?.diagnosis && (
+              <p>
+                <b>Diagnosis:</b> {item.incident.diagnosis}
+              </p>
+            )}
+
+            {item.incident?.action && (
+              <p>
+                <b>Recommended Action:</b> {item.incident.action}
+              </p>
+            )}
+
+            {item.action_result && (
+              <div className="border rounded-lg p-4">
+                <p className="font-semibold">
+                  Action Result
+                </p>
+
+                <p>
+                  Status: {item.action_result.status}
+                </p>
+
+                {item.action_result.message && (
+                  <p>
+                    {item.action_result.message}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {item.execution && (
+              <div className="border rounded-lg p-4">
+                <p className="font-semibold">
+                  Execution
+                </p>
+
+                <p>
+                  Status: {item.execution.status}
+                </p>
+
+                <p>
+                  Action: {item.execution.action}
+                </p>
+
+                {item.execution.issue_key && (
+                  <p>
+                    Issue: {item.execution.issue_key}
+                  </p>
+                )}
+
+                {item.execution.timestamp && (
+                  <p className="text-sm text-muted-foreground">
+                    {item.execution.timestamp}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {item.verification && (
+              <div className="border rounded-lg p-4">
+                <p className="font-semibold">
+                  Verification
+                </p>
+
+                <p>
+                  Status: {item.verification.status}
+                </p>
+
+                {item.verification.message && (
+                  <p>
+                    {item.verification.message}
+                  </p>
+                )}
+
+                {item.verification.reason && (
+                  <p>
+                    Reason: {item.verification.reason}
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className="flex gap-3 flex-wrap">
+
+              {item.status === 'PENDING' && (
+                <>
+                  <button
+                    className="px-4 py-2 rounded bg-blue-600 text-white"
+                    onClick={() => approve(item.id)}
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    className="px-4 py-2 rounded bg-red-600 text-white"
+                    onClick={() => reject(item.id)}
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
+
+              {item.status === 'APPROVED' && (
+                <button
+                  className="px-4 py-2 rounded bg-orange-600 text-white"
+                  onClick={() => remediate(item.id)}
+                >
+                  Execute Remediation
+                </button>
+              )}
+
+              {item.status === 'REMEDIATING' &&
+                item.verification?.status === 'PENDING' && (
+                  <button
+                    className="px-4 py-2 rounded bg-green-600 text-white"
+                    onClick={() => verify(item.id)}
+                  >
+                    Verify Resolution
+                  </button>
+                )}
+
+              {item.status === 'RESOLVED' && (
+                <span className="px-4 py-2 rounded bg-green-100 text-green-700 font-semibold">
+                  ✓ Resolved & Verified
+                </span>
+              )}
+
+              {item.status === 'REJECTED' && (
+                <span className="px-4 py-2 rounded bg-red-100 text-red-700 font-semibold">
+                  Manual Review Required
+                </span>
+              )}
+
+            </div>
+
+          </div>
+        ))}
+
+      </div>
+
+    </div>
   )
 }
