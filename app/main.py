@@ -42,6 +42,12 @@ from .routers import (
     examples_router,
     health_router,
     items_router,
+    policy_router,
+    exceptions_router,
+    insights_router,
+    orchestrator_router,
+    metrics_router,
+    ai_router,
 )
 from .security import get_current_user, verify_access
 
@@ -154,6 +160,17 @@ api_router.include_router(items_router)
 # Authorization pattern examples
 api_router.include_router(examples_router)
 
+api_router.include_router(policy_router)
+
+api_router.include_router(exceptions_router)
+
+api_router.include_router(insights_router)
+
+api_router.include_router(orchestrator_router)
+
+api_router.include_router(metrics_router)
+
+api_router.include_router(ai_router)
 
 # =============================================================================
 # FILE STORAGE ENDPOINTS (kept inline for path matching order)
