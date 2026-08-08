@@ -25,3 +25,4 @@ python-json-logger
 sqlalchemy
 psycopg2-binary
 alembic
+google-genai
