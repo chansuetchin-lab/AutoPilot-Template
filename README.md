@@ -14,3 +14,8 @@ The ResolveOps multi-agent system is built on **Supervity Auto** and consists of
 4. [Major Incident Detection Operator Agent](https://auto.supervity.ai/u/alpha/agent/workflow/019fd5fb-d254-7000-bdf2-46cd56c4d6c2?tab=Workflow)
 5. [Final Metrics Operator Agent](https://auto.supervity.ai/u/alpha/agent/workflow/019fd630-0c87-7000-8c97-134cb30c7b0f?tab=Workflow)
 
+### AutoPilot Commend Center
+http://localhost:3001/
+
+### AutoPilot API
+http://localhost:8001/api/docs
